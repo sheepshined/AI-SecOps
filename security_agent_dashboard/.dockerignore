@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+node_modules/
+*.log
+*.lock
+.env
+.env.*
+data/
+dashboard.log
+*.png
+*.jpg
+page_dump.html
+security_agent_dashboard.html
+enterprise-attack-*.json
+.git/

@@ -1,0 +1,21 @@
+# AI SecOps 智能体平台 — 运行依赖
+# 本文件内容与 docs/02_开发文档.md §3.3 一致，并与 security_agent_dashboard/ 实际 import 核对过。
+# 安装：pip install -r requirements.txt
+#
+# 最小可跑（无 PDF/DOCX 解析、不用 XDR 连接码）：
+#   pip install flask mysql-connector-python requests urllib3
+
+flask>=3.0.0
+requests>=2.31.0
+urllib3>=2.0.0
+mysql-connector-python>=8.0.0
+python-dotenv>=1.0.0
+
+# 可选：仅在用到对应功能时才需要
+pycryptodome>=3.19.0    # 使用 XDR 连接码（XDR_AUTH_CODE）解密 AK/SK 时需要
+pdfplumber>=0.11.0      # 资料库上传 PDF 文本提取需要
+python-docx>=1.1.0      # 资料库上传 DOCX 文本提取需要
+
+# 可选：仅构建 ATT&CK JSON 的一次性脚本（rebuild_attack.py / enrich_attack_json.py /
+# build_attack_json_from_html.py）需要，看板运行时（app.py）不使用。
+beautifulsoup4>=4.12.0

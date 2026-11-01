@@ -1,0 +1,49 @@
+# ===== 密钥（推送远程前必须确认本段生效）=====
+.env
+.env.*
+!.env.example
+data/assistant_config.json
+data/xdr_config.json
+data/identity_db.json
+data/skills_config.json
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+.venv/
+
+# ===== 运行时产物 =====
+*.log
+*.lock
+dashboard.log
+flask.log
+judgment.log
+data/vuln_scheduler.log
+data/llm_usage.jsonl
+pipeline_result.json
+
+# ===== 资料库 / 漏洞库内容（体积大且含演示数据）=====
+data/library/*.json
+data/library/*.content.txt
+data/library/*.csv
+data/library/*.html
+
+# ===== 大文件源数据（ATT&CK STIX 原件 53MB）=====
+enterprise-attack-*.json
+
+# ===== 截图 / 调试产物 =====
+*.png
+*.jpg
+page_dump.html
+security_agent_dashboard.html
+
+# ===== 前端依赖 =====
+node_modules/
+
+# ===== IDE / 系统 =====
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

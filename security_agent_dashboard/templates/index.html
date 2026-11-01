@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>安全智能体运营平台 | Security Agent Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="brand">
+                <i data-lucide="shield-check" class="brand-icon"></i>
+                <div>
+                    <div class="brand-title">AI SecOps</div>
+                    <div class="brand-sub">安全智能体运营平台</div>
+                </div>
+            </div>
+            <nav class="nav">
+               <button class="nav-item active" data-view="dashboard">
+                   <i data-lucide="layout-dashboard"></i>
+                   <span>总览</span>
+               </button>
+                <button class="nav-item" data-view="assets">
+                    <i data-lucide="globe"></i>
+                    <span>Web 资产</span>
+                    <span class="badge" id="nav-asset-count" style="display:none;">0</span>
+                </button>
+               <button class="nav-item" data-view="alarms">
+                   <i data-lucide="bell-ring"></i>
+                    <span>告警中心</span>
+                    <span class="badge" id="nav-alarm-count">0</span>
+                </button>
+                <button class="nav-item" data-view="blocking">
+                    <i data-lucide="ban"></i>
+                    <span>IP 封禁</span>
+                </button>
+                <button class="nav-item" data-view="attck">
+                    <i data-lucide="target"></i>
+                    <span>ATT&amp;CK 映射</span>
+                </button>
+                <button class="nav-item" data-view="falsepositive">
+                    <i data-lucide="filter-x"></i>
+                    <span>告警加白</span>
+                </button>
+                <button class="nav-item" data-view="reports">
+                    <i data-lucide="file-text"></i>
+                    <span>报告生成</span>
+                </button>
+                <button class="nav-item" data-view="library">
+                    <i data-lucide="book-open"></i>
+                    <span>资料库</span>
+                </button>
+                <button class="nav-item" data-view="vulns">
+                    <i data-lucide="shield-alert"></i>
+                    <span>漏洞库</span>
+                </button>
+                <button class="nav-item" data-view="assistant">
+                    <i data-lucide="bot"></i>
+                    <span>智能助理</span>
+                </button>
+            </nav>
+            <div class="sidebar-foot">
+                <div class="status-dot"></div>
+                <span>平台在线</span>
+            </div>
+        </aside>
+
+        <main class="main">
+            <header class="topbar">
+                <h1 id="page-title">安全运营总览</h1>
+                <div class="topbar-actions">
+                    <button class="btn btn-ghost" id="refresh-btn">
+                        <i data-lucide="refresh-cw"></i>
+                        <span>刷新</span>
+                    </button>
+                    <div class="user">
+                        <span>SecOps Team</span>
+                        <i data-lucide="user-circle"></i>
+                    </div>
+                </div>
+            </header>
+
+            <section class="view view-dashboard active" id="view-dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">今日告警</div>
+                        <div class="stat-value" id="stat-total">0</div>
+                        <div class="stat-delta">较昨日 +12%</div>
+                    </div>
+                    <div class="stat-card urgent">
+                        <div class="stat-label">高危告警</div>
+                        <div class="stat-value" id="stat-high">0</div>
+                        <div class="stat-delta">需立即处置</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">已封禁 IP</div>
+                        <div class="stat-value" id="stat-blocked">0</div>
+                        <div class="stat-delta">防火墙生效中</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">告警加白</div>
+                        <div class="stat-value" id="stat-fp">0</div>
+                        <div class="stat-delta">规则已降噪</div>
+                    </div>
+                </div>
+
+                <div class="panel-row">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2>最近高危告警</h2>
+                            <button class="btn btn-text" data-goto="alarms">查看全部</button>
+                        </div>
+                        <div class="alarm-list compact" id="recent-alarms"></div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2>ATT&amp;CK 战术分布</h2>
+                        </div>
+                        <div class="tactic-bars" id="tactic-bars"></div>
+                    </div>
+                </div>
+                <div class="panel-row">
+                    <div class="panel panel-full">
+                        <div class="panel-header">
+                            <h2><i data-lucide="globe" class="panel-icon"></i>Web 资产健康状态</h2>
+                            <div class="header-actions">
+                                <span class="asset-status-pill healthy"><i data-lucide="check-circle-2"></i><span id="dash-asset-healthy">0</span> 正常</span>
+                                <span class="asset-status-pill issue"><i data-lucide="alert-circle"></i><span id="dash-asset-issue">0</span> 异常</span>
+                                <button class="btn btn-text" data-goto="assets">查看全部</button>
+                            </div>
+                        </div>
+                        <div class="asset-dashboard-grid" id="dash-asset-grid"></div>
+                    </div>
+                </div>
+                <div class="panel-row">
+                    <div class="panel panel-full">
+                        <div class="panel-header">
+                            <h2><i data-lucide="bell-ring" class="panel-icon"></i>Web 资产告警</h2>
+                            <div class="header-actions">
+                                <span class="asset-status-pill issue"><i data-lucide="alert-triangle"></i><span id="dash-asset-alert-count">0</span> 条</span>
+                                <button class="btn btn-text" data-goto="assets">处置全部</button>
+                            </div>
+                        </div>
+                        <div class="asset-alert-list" id="dash-asset-alerts"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="view view-alarms" id="view-alarms">
+                <div class="toolbar">
+                    <div class="search">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="alarm-search" placeholder="搜索告警 ID、IP、描述...">
+                    </div>
+                    <div class="filters">
+                        <select id="severity-filter">
+                            <option value="">全部等级</option>
+                            <option value="critical">严重</option>
+                            <option value="high">高危</option>
+                            <option value="medium">中危</option>
+                            <option value="low">低危</option>
+                        </select>
+                        <select id="status-filter">
+                            <option value="">全部状态</option>
+                            <option value="pending,open">待处置</option>
+                            <option value="blocked,closed">已处置</option>
+                            <option value="false_positive">加白告警</option>
+                            
+                        </select>
+                        <select id="ai-filter">
+                            <option value="">全部来源</option>
+                            <option value="ai">AI 研判</option>
+                            <option value="manual">规则触发</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="panel">
+                    <table class="data-table alarm-table">
+                        <thead>
+                           <tr>
+                               <th>等级</th>
+                               <th>告警 ID</th>
+                               <th>来源</th>
+                               <th>AI 研判结果</th>
+                                <th>告警名称</th>
+                               <th>ATT&amp;CK 技术</th>
+                               <th>XDR 摘要</th>
+                               <th>源 IP</th>
+                               <th>目标</th>
+                               <th>时间</th>
+                               <th>状态</th>
+                               <th>操作</th>
+                           </tr>
+                        </thead>
+                        <tbody id="alarm-table-body"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="view view-blocking" id="view-blocking">
+                <div class="panel-row">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2>快速封禁</h2>
+                        </div>
+                        <div class="form-inline">
+                            <input type="text" id="block-ip-input" placeholder="输入 IPv4，如 192.168.1.100">
+                            <input type="text" id="block-reason-input" placeholder="封禁原因（可选）">
+                            <button class="btn btn-danger" id="block-btn">
+                                <i data-lucide="shield-ban"></i>
+                                <span>封禁 IP</span>
+                            </button>
+                        </div>
+                        <p class="hint">支持单个 IP 输入；命中告警的 IP 可一键从告警列表封禁。</p>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2>封禁统计</h2>
+                        </div>
+                        <div class="stat-inline">
+                            <div>
+                                <div class="stat-label">生效规则</div>
+                                <div class="stat-value" id="rule-active">0</div>
+                            </div>
+                            <div>
+                                <div class="stat-label">今日拦截</div>
+                                <div class="stat-value">1,284</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2>已封禁 IP 列表</h2>
+                        <button class="btn btn-ghost" id="export-blocked-btn">
+                            <i data-lucide="download"></i>
+                            <span>导出</span>
+                        </button>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>IP 地址</th>
+                                <th>封禁原因</th>
+                                <th>封禁时间</th>
+                                <th>来源告警</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="blocked-table-body"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="view view-attck" id="view-attck">
+                <div class="toolbar">
+                    <div class="search">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="attck-search" placeholder="搜索战术、技术、技术 ID...">
+                    </div>
+                    <select id="tactic-filter">
+                        <option value="">全部战术</option>
+                    </select>
+                </div>
+                <div class="panel">
+                    <div class="attck-matrix" id="attck-matrix"></div>
+                </div>
+            </section>
+
+            <section class="view view-falsepositive" id="view-falsepositive">
+                                <div class="panel-row">
+                    <div class="panel">
+                        <div class="panel-header"><h2>新增加白规则</h2></div>
+                        <div class="whitelist-form form-stack">
+                            <div class="form-row">
+                                <label>
+                                    <span>源 IP</span>
+                                    <input type="text" id="wl-src-ip" placeholder="例: 10.0.0.1">
+                                </label>
+                                <label>
+                                    <span>目的 IP</span>
+                                    <input type="text" id="wl-dst-ip" placeholder="例: 192.168.1.1">
+                                </label>
+                                <label>
+                                    <span>源端口</span>
+                                    <input type="text" id="wl-src-port" placeholder="例: 443">
+                                </label>
+                                <label>
+                                    <span>目的端口</span>
+                                    <input type="text" id="wl-dst-port" placeholder="例: 80">
+                                </label>
+                            </div>
+                            <label>
+                                <span>告警名称</span>
+                                <input type="text" id="wl-name" placeholder="支持子串匹配，例: SQL注入">
+                            </label>
+                            <label>
+                                <span>加白原因</span>
+                                <input type="text" id="wl-reason" placeholder="例: 授权扫描 / 内部运维">
+                            </label>
+                            <button class="btn btn-primary" id="wl-create-btn">添加规则</button>
+                        </div>
+                    </div>
+                </div>
+<div class="toolbar">
+                    <div class="search">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="fp-search" placeholder="搜索告警...">
+                    </div>
+                    <button class="btn btn-ghost" id="batch-fp-btn">
+                        <i data-lucide="check-check"></i>
+                        <span>批量加白</span>
+                    </button>
+                </div>
+                <div class="panel-row">
+                    <div class="panel">
+                        <div class="panel-header"><h2>加白规则</h2></div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>状态</th>
+                                    <th>匹配条件（空字段=任意）</th>
+                                    <th>加白原因</th>
+                                    <th>创建时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="whitelist-rules-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-header"><h2>待加白告警</h2></div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="fp-select-all"></th>
+                                <th>等级</th>
+                                <th>告警 ID</th>
+                                <th>告警名称</th>
+                                <th>源 IP</th>
+                                <th>目的 IP</th>
+                                <th>时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fp-table-body"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="view view-reports" id="view-reports">
+                <div class="panel-row">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2>生成安全运营报告</h2>
+                        </div>
+                        <div class="form-stack">
+                            <label>
+                                <span>报告周期</span>
+                                <select id="report-range">
+                                    <option value="day">今日</option>
+                                    <option value="week">本周</option>
+                                    <option value="month">本月</option>
+                                </select>
+                            </label>
+                            <label>
+                                <span>报告模板</span>
+                                <select id="report-template">
+                                    <option value="executive">高管摘要</option>
+                                    <option value="operational">运营日报</option>
+                                    <option value="attck">ATT&amp;CK 复盘</option>
+                                </select>
+                            </label>
+                            <button class="btn btn-primary" id="generate-report-btn">
+                                <i data-lucide="file-plus"></i>
+                                <span>生成报告</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="panel report-preview" id="report-preview-panel" style="display:none;">
+                        <div class="panel-header">
+                            <h2>报告预览</h2>
+                            <button class="btn btn-ghost" id="copy-report-btn">
+                                <i data-lucide="copy"></i>
+                                <span>复制</span>
+                            </button>
+                        </div>
+                        <pre id="report-content"></pre>
+                    </div>
+                </div>
+           </section>
+            <section class="view view-assets" id="view-assets">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">监测站点</div>
+                        <div class="stat-value" id="stat-asset-total">0</div>
+                        <div class="stat-delta">已配置资产</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">业务正常</div>
+                        <div class="stat-value" id="stat-asset-healthy">0</div>
+                        <div class="stat-delta">业务状态码正常</div>
+                    </div>
+                    <div class="stat-card urgent">
+                        <div class="stat-label">异常 / 需关注</div>
+                        <div class="stat-value" id="stat-asset-issue">0</div>
+                        <div class="stat-delta">业务或 WAF 异常</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">WAF 正常</div>
+                        <div class="stat-value" id="stat-asset-waf">0</div>
+                        <div class="stat-delta">WAF 状态码正常</div>
+                    </div>
+                </div>
+
+                <div class="panel-row">
+                    <div class="panel">
+                        <div class="panel-header" style="display:flex;justify-content:space-between;align-items:center;">
+                            <h2>添加监测资产</h2>
+                            <button class="btn btn-sm btn-ghost" id="toggle-asset-form-btn">
+                                <span>展开</span>
+                            </button>
+                        </div>
+                        <div class="form-stack asset-form" id="asset-form-body" style="display:none;">
+                            <label>
+                                <span>资产名称</span>
+                                <input type="text" id="asset-name" placeholder="例如 官网首页">
+                            </label>
+                            <label>
+                                <span>URL / 域名</span>
+                                <input type="text" id="asset-url" placeholder="https://example.com">
+                            </label>
+                            <div class="form-inline asset-form-inline">
+                                <label>
+                                    <span>业务正常状态码</span>
+                                    <input type="number" id="asset-business-status-code" value="200" min="100" max="599">
+                                </label>
+                                <label>
+                                    <span>WAF 正常状态码</span>
+                                    <input type="number" id="asset-waf-status-code" value="200" min="100" max="599">
+                                </label>
+                            </div>
+                            <button class="btn btn-primary" id="add-asset-btn">
+                                <i data-lucide="plus"></i>
+                                <span>添加资产</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="panel asset-detail" id="asset-detail-panel" style="display:none;">
+                        <div class="panel-header">
+                            <h2 id="asset-detail-title">探测历史</h2>
+                        </div>
+                        <div id="asset-detail-content"></div>
+                    </div>
+                </div>
+
+                <div class="toolbar">
+                    <div class="search">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="asset-search" placeholder="搜索资产名称或 URL...">
+                    </div>
+                    <button class="btn btn-ghost" id="check-all-assets-btn">
+                        <i data-lucide="radar"></i>
+                        <span>全部探测</span>
+                    </button>
+                </div>
+                <div class="panel">
+                    <table class="data-table asset-table">
+                        <thead>
+                            <tr>
+                                <th>资产名称</th>
+                                <th>URL</th>
+                                <th>业务状态</th>
+                                <th>WAF 状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="asset-table-body"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="view" id="view-library">
+                <div class="toolbar">
+                    <div class="search">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="library-search" placeholder="搜索资料名称或内容...">
+                    </div>
+                    <button class="btn btn-primary" id="library-upload-btn">
+                        <i data-lucide="upload"></i>
+                        <span>上传文件</span>
+                    </button>
+                    <input type="file" id="library-file-input" style="display:none;">
+                </div>
+                <div class="upload-zone" id="library-drop-zone">
+                    <i data-lucide="upload-cloud"></i>
+                    <p>拖拽文件到此处，或点击上传</p>
+                    <p class="hint">支持 txt、md、pdf、docx、csv、json、log 等</p>
+                </div>
+                <div class="panel-row library-layout">
+                    <div class="panel library-list-panel">
+                        <table class="data-table" id="library-table">
+                            <thead>
+                                <tr>
+                                    <th>文件名</th>
+                                    <th>类型</th>
+                                    <th>大小</th>
+                                    <th>上传时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="library-table-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="panel library-preview-panel" id="library-preview-panel" style="display:none;">
+                        <div class="panel-header">
+                            <h2 id="library-preview-title">资料预览</h2>
+                            <button class="btn btn-ghost" id="library-preview-close">关闭</button>
+                        </div>
+                        <div class="library-preview-actions">
+                            <button class="btn btn-primary" id="library-analyze-btn">AI 研判</button>
+                        </div>
+                        <pre id="library-preview-content"></pre>
+                        <div id="library-analyze-result"></div>
+                    </div>
+                </div>
+            </section>
+                  <section class="view" id="view-vulns">
+               <div class="toolbar vuln-toolbar">
+                   <div class="vuln-sources" id="vuln-sources"></div>
+                   <div class="vuln-scheduler-controls" id="vuln-scheduler-controls">
+                       <label class="toggle" title="开启/关闭定时自动更新">
+                           <input type="checkbox" id="vuln-auto-toggle">
+                           <span class="toggle-slider"></span>
+                           <span>自动更新</span>
+                       </label>
+                       <select id="vuln-interval-select" title="更新周期">
+                           <option value="300">5 分钟</option>
+                           <option value="900">15 分钟</option>
+                           <option value="3600">1 小时</option>
+                           <option value="21600" selected>6 小时</option>
+                           <option value="43200">12 小时</option>
+                           <option value="86400">24 小时</option>
+                       </select>
+                       <span class="vuln-status-text" id="vuln-status-text">自动更新已关闭</span>
+                       <button class="btn btn-primary" id="vuln-update-btn">
+                           <i data-lucide="refresh-cw"></i>
+                           <span>更新漏洞库</span>
+                       </button>
+                   </div>
+               </div>
+               <div class="panel vuln-status-bar" id="vuln-status-bar" style="display:none;">
+                   <span id="vuln-last-run">上次运行：-</span>
+                   <span id="vuln-next-run">下次运行：-</span>
+                   <span id="vuln-update-progress"></span>
+               </div>
+               <div class="panel-row library-layout">
+                    <div class="panel library-list-panel">
+                        <table class="data-table" id="vuln-table">
+                            <thead>
+                                <tr>
+                                    <th>数据源</th>
+                                    <th>漏洞数</th>
+                                    <th>更新时间</th>
+                                    <th>大小</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vuln-table-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="panel library-preview-panel" id="vuln-preview-panel" style="display:none;">
+                        <div class="panel-header">
+                            <h2 id="vuln-preview-title">漏洞资料预览</h2>
+                            <button class="btn btn-ghost" id="vuln-preview-close">关闭</button>
+                        </div>
+                        <div class="library-preview-actions">
+                            <button class="btn btn-primary" id="vuln-analyze-btn">AI 研判</button>
+                        </div>
+                        <pre id="vuln-preview-content"></pre>
+                        <div id="vuln-analyze-result"></div>
+                    </div>
+                </div>
+            </section>            <section class="view" id="view-assistant"></section>
+
+</main>
+   </div>
+
+    <div class="toast" id="toast"></div>
+   <script>
+        window.onerror = function(msg, url, line) {
+            var info = 'JS 运行错误：' + msg + ' (line ' + line + ')';
+            console.error(info);
+            if (document.body) {
+                var el = document.createElement('pre');
+                el.style.cssText = 'color:#ef4444;background:#0b0d12;padding:20px;font-size:13px;line-height:1.6;margin:0;';
+                el.textContent = info;
+                document.body.appendChild(el);
+            }
+        };
+   </script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/assistant.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/library.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/vulns.js') }}"></script>
+    <div class="assistant-fab" id="assistant-fab" aria-label="安全运营智能助理"><i data-lucide="bot"></i></div>
+    <div class="assistant-panel" id="assistant-panel">
+        <div class="assistant-header">
+            <div class="assistant-title"><i data-lucide="bot"></i><span>安全运营智能助理</span></div>
+            <div class="assistant-header-actions">
+                <button class="assistant-settings-btn" id="assistant-settings-btn" aria-label="模型设置" title="模型设置"><i data-lucide="settings"></i></button>
+                <button class="assistant-close" id="assistant-close" aria-label="关闭"><i data-lucide="x"></i></button>
+            </div>
+        </div>
+        <div class="assistant-settings" id="assistant-settings">
+            <div class="assistant-settings-row">
+                <label>启用大模型</label>
+                <label class="toggle"><input type="checkbox" id="assistant-model-toggle"><span class="toggle-slider"></span></label>
+            </div>
+            <div class="assistant-settings-tabs" style="display:flex;gap:8px;margin-bottom:8px;">
+                <button type="button" class="btn btn-sm btn-primary" id="tab-model" style="flex:1;">模型设置</button>
+                <button type="button" class="btn btn-sm btn-ghost" id="tab-skills" style="flex:1;">技能配置</button>
+            </div>
+            <div id="assistant-model-section">
+            <div class="assistant-settings-row">
+                <label>当前模型</label>
+                <select id="assistant-model-select">
+                    <option value="">未配置模型</option>
+                </select>
+                <button class="btn btn-sm btn-primary" id="model-config-add">添加模型</button>
+            </div>
+            <div id="assistant-model-form">
+                <input type="hidden" id="model-config-id">
+                <div class="assistant-settings-row"><label>名称</label><input type="text" id="model-config-name" placeholder="例如 OpenAI GPT-4o"></div>
+                <div class="assistant-settings-row"><label>服务商</label>
+                    <select id="model-config-provider">
+                        <option value="openai">OpenAI / 兼容 OpenAI</option>
+                        <option value="kimi">Kimi (Moonshot)</option>
+                        <option value="minimax">MiniMax</option>
+                    </select>
+                </div>
+                <div class="assistant-settings-row"><label>Base URL</label><input type="text" id="model-config-baseurl" placeholder="https://api.openai.com/v1"></div>
+                <div class="assistant-settings-row"><label>API Key</label><input type="password" id="model-config-key" placeholder="sk-..."></div>
+                <div class="assistant-settings-row"><label>模型名</label><input type="text" id="model-config-model" placeholder="gpt-4o-mini"></div>
+                <div class="assistant-settings-row assistant-settings-actions">
+                    <button class="btn btn-sm btn-primary" id="model-config-save">保存</button>
+                    <button class="btn btn-sm btn-ghost" id="model-config-cancel">取消</button>
+                    <button class="btn btn-sm btn-danger" id="model-config-delete" style="display:none;">删除</button>
+                    <button class="btn btn-sm btn-ghost" id="model-config-test" style="display:none;">测试</button>
+                </div>
+            </div>
+            </div>
+            <div id="assistant-skills-section" style="display:none;">
+                <div class="assistant-settings-row" style="align-items:flex-start;">
+                    <label>技能列表</label>
+                    <div id="skills-list" style="flex:1;max-height:160px;overflow-y:auto;"></div>
+                </div>
+                <div class="assistant-settings-row assistant-settings-actions">
+                    <button class="btn btn-sm btn-primary" id="skill-config-add">添加技能</button>
+                </div>
+                <div id="assistant-skill-form" style="display:none;">
+                    <input type="hidden" id="skill-config-id">
+                    <div class="assistant-settings-row"><label>名称</label><input type="text" id="skill-config-name" placeholder="例如：查询资产"></div>
+                    <div class="assistant-settings-row"><label>描述</label><input type="text" id="skill-config-desc" placeholder="技能作用"></div>
+                    <div class="assistant-settings-row"><label>Handler</label>
+                        <select id="skill-config-handler">
+                            <option value="block_ip">IP 封禁</option>
+                            <option value="query_identity">IP 查询姓名学号</option>
+                        </select>
+                    </div>
+                    <div class="assistant-settings-row"><label>触发词</label><input type="text" id="skill-config-keywords" placeholder="用逗号分隔，例如：封禁,拉黑"></div>
+                    <div class="assistant-settings-row assistant-settings-actions">
+                        <button class="btn btn-sm btn-primary" id="skill-config-save">保存</button>
+                        <button class="btn btn-sm btn-ghost" id="skill-config-cancel">取消</button>
+                        <button class="btn btn-sm btn-danger" id="skill-config-delete" style="display:none;">删除</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="assistant-messages" id="assistant-messages"></div>
+        <div class="assistant-footer">
+            <div class="assistant-hints">
+                <button>今天有多少告警</button>
+                <button>哪些 IP 被封禁了</button>
+                <button>ATT&CK 哪个技术最多</button>
+            </div>
+            <div class="assistant-input-area">
+                <input type="text" id="assistant-input" placeholder="输入指令...">
+                <button class="btn btn-primary" id="assistant-send" aria-label="发送"><i data-lucide="send"></i></button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

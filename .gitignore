@@ -1,0 +1,33 @@
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+
+# Local runtime data
+security_agent_dashboard/data/
+enterprise-attack-*.json
+*.db
+*.sqlite
+*.sqlite3
+/提交文档/_实测记录_raw.json
+*.log
+
+# Dependencies and caches
+node_modules/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Temporary presentation scripts
+/_*tmp.py
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

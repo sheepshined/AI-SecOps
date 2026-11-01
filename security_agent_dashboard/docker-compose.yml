@@ -1,0 +1,37 @@
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: changeme-root
+      MYSQL_DATABASE: security_dashboard
+      MYSQL_USER: qwet
+      MYSQL_PASSWORD: changeme-qwet
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-pchangeme-root"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  dashboard:
+    build: .
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_USER: qwet
+      DB_PASSWORD: changeme-qwet
+      DB_NAME: security_dashboard
+      # 如需演示封禁内网靶机，改为 "1"
+      ALLOW_INTERNAL_BLOCK: "0"
+    ports:
+      - "5000:5000"
+    # XDR/模型凭据运行时通过前端写入 data/，持久化到宿主机
+    volumes:
+      - ./data:/app/data
+
+volumes:
+  mysql_data:
